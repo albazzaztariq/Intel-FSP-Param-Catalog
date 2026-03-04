@@ -148,8 +148,20 @@ let expandedCards = new Set();
 
 function init() {
   buildPlatformSelect();
-  showLanding();
   setupEvents();
+  // Parse hash: #platform or #platform/fieldName
+  const hash = decodeURIComponent(window.location.hash.slice(1));
+  if (hash) {
+    const parts = hash.split('/');
+    const pkg = parts[0];
+    const paramField = parts[1] || null;
+    const match = INDEX.find(p => p.pkg_name === pkg || p.platform === pkg);
+    if (match) {
+      loadPlatform(match.pkg_name, paramField);
+      return;
+    }
+  }
+  showLanding();
 }
 
 function buildPlatformSelect() {
@@ -173,6 +185,7 @@ function buildPlatformSelect() {
 }
 
 function showLanding() {
+  history.replaceState(null, '', window.location.pathname);
   const content = document.getElementById('content');
   const groups = {Server:[], Client:[], Embedded:[]};
   for (const p of INDEX) (groups[p.segment]||groups.Client).push(p);
@@ -203,9 +216,14 @@ function showLanding() {
   document.getElementById('platformMeta').innerHTML = '';
 }
 
-async function loadPlatform(pkgName) {
+async function loadPlatform(pkgName, scrollToParam) {
   currentPlatform = INDEX.find(p => p.pkg_name === pkgName);
   if (!currentPlatform) return;
+
+  // Update URL hash
+  if (!scrollToParam) {
+    history.pushState(null, '', '#' + pkgName);
+  }
 
   document.getElementById('platformSelect').value = pkgName;
   const meta = document.getElementById('platformMeta');
@@ -229,7 +247,32 @@ async function loadPlatform(pkgName) {
   expandedCards.clear();
   document.getElementById('searchInput').value = '';
   buildSidebar();
+
+  // If targeting a specific param, expand it and scroll to it
+  if (scrollToParam) {
+    const target = platformData.parameters.find(p => p.field_name === scrollToParam);
+    if (target) {
+      expandedCards.add(target.offset + target.field_name);
+      history.replaceState(null, '', '#' + pkgName + '/' + scrollToParam);
+    }
+  }
+
   renderContent();
+
+  // Scroll to targeted param after render
+  if (scrollToParam) {
+    requestAnimationFrame(() => {
+      const target = platformData.parameters.find(p => p.field_name === scrollToParam);
+      if (target) {
+        const el = document.querySelector(`.param-card[data-id="${target.offset}${target.field_name}"]`);
+        if (el) {
+          el.scrollIntoView({behavior:'smooth', block:'center'});
+          el.style.boxShadow = '0 0 0 2px var(--accent)';
+          setTimeout(() => el.style.boxShadow = '', 2000);
+        }
+      }
+    });
+  }
 }
 
 function buildSidebar() {
@@ -314,7 +357,18 @@ function renderOpts(opts, def) {
 }
 
 function toggleCard(id) {
-  if (expandedCards.has(id)) expandedCards.delete(id); else expandedCards.add(id);
+  if (expandedCards.has(id)) {
+    expandedCards.delete(id);
+    // Reset hash to just platform
+    if (currentPlatform) history.replaceState(null, '', '#' + currentPlatform.pkg_name);
+  } else {
+    expandedCards.add(id);
+    // Find the field name for this card and update hash
+    if (platformData && currentPlatform) {
+      const param = platformData.parameters.find(p => (p.offset + p.field_name) === id);
+      if (param) history.replaceState(null, '', '#' + currentPlatform.pkg_name + '/' + param.field_name);
+    }
+  }
   const c = document.querySelector(`.param-card[data-id="${id}"]`);
   if (c) c.classList.toggle('expanded');
 }
@@ -346,6 +400,14 @@ function setupEvents() {
   });
   document.getElementById('platformSelect').addEventListener('change', e => {
     if (e.target.value) loadPlatform(e.target.value); else showLanding();
+  });
+  // Browser back/forward
+  window.addEventListener('popstate', () => {
+    const hash = decodeURIComponent(window.location.hash.slice(1));
+    if (!hash) { showLanding(); return; }
+    const parts = hash.split('/');
+    const match = INDEX.find(p => p.pkg_name === parts[0] || p.platform === parts[0]);
+    if (match) loadPlatform(match.pkg_name, parts[1] || null);
   });
 }
 
