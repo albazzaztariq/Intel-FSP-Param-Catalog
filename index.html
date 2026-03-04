@@ -170,7 +170,7 @@ body.vendor-intel .platform-select select:focus{border-color:var(--intel)}
       <button id="btnAMD"   class="vtoggle" onclick="selectVendor('AMD')">AMD</button>
     </div>
     <div class="platform-select">
-      <select id="platformSelect"><option value="">Select platform...</option></select>
+      <select id="platformSelect" autocomplete="off"><option value="">Select platform...</option></select>
     </div>
     <nav class="sidebar-nav" id="sidebarNav"></nav>
   </aside>
@@ -425,6 +425,9 @@ function rebuildPlatformSelect() {
       sel.appendChild(og);
     }
   }
+
+  // Restore current selection if still in list, otherwise blank
+  sel.value = currentPlatform ? currentPlatform.pkg_name : '';
 }
 
 function buildSidebar() {
