@@ -388,7 +388,7 @@ async function loadPlatform(pkgName, scrollToField, push) {
 
 function rebuildPlatformSelect() {
   const sel = document.getElementById('platformSelect');
-  sel.innerHTML = '<option value="">Select platform...</option>';
+  sel.innerHTML = '<option value="">Select Processor...</option>';
 
   const show = selectedVendor ? INDEX.filter(p => p.vendor === selectedVendor) : INDEX;
   const intel = show.filter(p => p.vendor === 'Intel');
