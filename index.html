@@ -23,6 +23,13 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 .sidebar-header .subtitle{font-size:11px;color:var(--text-dim)}
 .sidebar-header .total{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cyan);margin-top:6px}
 
+/* Vendor toggle */
+.vendor-toggle{display:flex;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border)}
+.vtoggle{flex:1;padding:7px 0;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text-dim);font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .15s;font-family:'JetBrains Mono',monospace}
+.vtoggle:hover{color:var(--text)}
+.vtoggle.active-intel{border-color:var(--intel);background:var(--intel-dim);color:#60a5fa}
+.vtoggle.active-amd{border-color:var(--amd);background:var(--amd-dim);color:var(--amd)}
+
 /* Vendor indicator bar */
 .vendor-bar{height:3px;width:100%;transition:background .3s}
 .vendor-bar.intel{background:var(--intel)}
@@ -154,13 +161,16 @@ body.vendor-intel .platform-select select:focus{border-color:var(--intel)}
   <aside class="sidebar" id="sidebar">
     <div class="vendor-bar none" id="vendorBar"></div>
     <div class="sidebar-header">
-      <h1>Param Catalog</h1>
+      <h1>Firmware Parameters Catalog</h1>
       <div class="subtitle">Intel FSP · AMD AGESA · openSIL</div>
-      <div class="total">29 platforms · 39,077 parameters</div>
+      <div class="total" id="totalBadge">29 platforms · 39,077 parameters</div>
+    </div>
+    <div class="vendor-toggle">
+      <button id="btnIntel" class="vtoggle" onclick="selectVendor('Intel')">Intel</button>
+      <button id="btnAMD"   class="vtoggle" onclick="selectVendor('AMD')">AMD</button>
     </div>
     <div class="platform-select">
       <select id="platformSelect"><option value="">Select platform...</option></select>
-      <div class="platform-meta" id="platformMeta"></div>
     </div>
     <nav class="sidebar-nav" id="sidebarNav"></nav>
   </aside>
@@ -176,11 +186,12 @@ body.vendor-intel .platform-select select:focus{border-color:var(--intel)}
 <script>
 const INDEX = [{"pkg_name":"AlderLakeFspBinPkg","platform":"AlderLake","processor":"12th Generation Intel Core (Alder Lake)","segment":"Client","fsp_spec_version":"2.3","total_parameters":10175,"categories":{"IIO / PCIe Configuration":1429,"Memory Configuration":1643,"Debug / Diagnostic":573,"Other":3412,"Peripheral / IO":1350,"Power Management":754,"CPU Configuration":203,"Graphics / Display":441,"Security":161,"UPI / Interconnect / Uncore":195,"Platform / Boot":14},"source":"https://github.com/intel/FSP/tree/master/AlderLakeFspBinPkg","vendor":"Intel"},{"pkg_name":"AmberLakeFspBinPkg","platform":"AmberLake","processor":"10th/8th/7th Gen Intel Core (Amber Lake, Kaby Lake Refresh)","segment":"Client","fsp_spec_version":"2.1","total_parameters":750,"categories":{"IIO / PCIe Configuration":98,"Memory Configuration":59,"Other":264,"Debug / Diagnostic":24,"Peripheral / IO":142,"Graphics / Display":37,"Power Management":85,"Security":15,"CPU Configuration":16,"UPI / Interconnect / Uncore":9,"Platform / Boot":1},"source":"https://github.com/intel/FSP/tree/master/AmberLakeFspBinPkg","vendor":"Intel"},{"pkg_name":"ApolloLakeFspBinPkg","platform":"ApolloLake","processor":"Intel Atom E3900 (Apollo Lake)","segment":"Embedded","fsp_spec_version":"2.0","total_parameters":364,"categories":{"Memory Configuration":41,"Debug / Diagnostic":10,"Graphics / Display":17,"Other":144,"Peripheral / IO":80,"IIO / PCIe Configuration":27,"CPU Configuration":6,"Security":2,"Power Management":21,"UPI / Interconnect / Uncore":15,"Platform / Boot":1},"source":"https://github.com/intel/FSP/tree/master/ApolloLakeFspBinPkg","vendor":"Intel"},{"pkg_name":"ArrowLakeFspBinPkg","platform":"ArrowLake","processor":"Intel Core Ultra (Arrow Lake)","segment":"Client","fsp_spec_version":"2.4","total_parameters":3285,"categories":{"IIO / PCIe Configuration":526,"Memory Configuration":536,"Debug / Diagnostic":188,"Other":1069,"Peripheral / IO":390,"CPU Configuration":86,"Graphics / Display":166,"Security":54,"Power Management":198,"UPI / Interconnect / Uncore":64,"Platform / Boot":8},"source":"https://github.com/intel/FSP/tree/master/ArrowLakeFspBinPkg","vendor":"Intel"},{"pkg_name":"BartlettLakeFspBinPkg","platform":"BartlettLake","processor":"Intel Core (Bartlett Lake)","segment":"Client","fsp_spec_version":"2.4","total_parameters":1465,"categories":{"IIO / PCIe Configuration":206,"Memory Configuration":239,"Debug / Diagnostic":85,"Other":494,"Peripheral / IO":185,"Power Management":110,"CPU Configuration":29,"Graphics / Display":64,"Security":23,"UPI / Interconnect / Uncore":28,"Platform / Boot":2},"source":"https://github.com/intel/FSP/tree/master/BartlettLakeFspBinPkg","vendor":"Intel"},{"pkg_name":"CedarIslandFspBinPkg","platform":"CedarIsland","processor":"3rd Gen Intel Xeon Scalable (Cooper Lake)","segment":"Server","fsp_spec_version":"2.1","total_parameters":118,"categories":{"Debug / Diagnostic":3,"Platform / Boot":5,"UPI / Interconnect / Uncore":38,"IIO / PCIe Configuration":49,"Memory Configuration":6,"Other":6,"Peripheral / IO":7,"Security":2,"CPU Configuration":2},"source":"https://github.com/intel/FSP/tree/master/CedarIslandFspBinPkg","vendor":"Intel"},{"pkg_name":"CoffeeLakeFspBinPkg","platform":"CoffeeLake","processor":"9th/8th Gen Intel Core (Coffee Lake, Whiskey Lake)","segment":"Client","fsp_spec_version":"2.0","total_parameters":1013,"categories":{"IIO / PCIe Configuration":107,"Memory Configuration":154,"Other":352,"Debug / Diagnostic":30,"Peripheral / IO":170,"Graphics / Display":49,"Power Management":99,"Security":20,"CPU Configuration":19,"UPI / Interconnect / Uncore":12,"Platform / Boot":1},"source":"https://github.com/intel/FSP/tree/master/CoffeeLakeFspBinPkg","vendor":"Intel"},{"pkg_name":"CometLakeFspBinPkg","platform":"CometLake","processor":"10th Gen Intel Core (Comet Lake)","segment":"Client","fsp_spec_version":"2.1","total_parameters":4347,"categories":{"IIO / PCIe Configuration":504,"Memory Configuration":646,"Debug / Diagnostic":158,"Other":1433,"Graphics / Display":192,"Power Management":394,"Security":82,"Peripheral / IO":731,"CPU Configuration":140,"UPI / Interconnect / Uncore":63,"Platform / Boot":4},"source":"https://github.com/intel/FSP/tree/master/CometLakeFspBinPkg","vendor":"Intel"},{"pkg_name":"DenvertonNSFspBinPkg","platform":"DenvertonNS","processor":"Intel Atom C3XXX (Denverton)","segment":"Embedded","fsp_spec_version":"2.0","total_parameters":81,"categories":{"Debug / Diagnostic":1,"Security":1,"Memory Configuration":16,"Peripheral / IO":15,"Other":10,"Platform / Boot":1,"IIO / PCIe Configuration":36,"CPU Configuration":1},"source":"https://github.com/intel/FSP/tree/master/DenvertonNSFspBinPkg","vendor":"Intel"},{"pkg_name":"EagleStreamFspBinPkg","platform":"EagleStream","processor":"4th Gen Intel Xeon Scalable (Sapphire Rapids)","segment":"Server","fsp_spec_version":"2.3","total_parameters":231,"categories":{"Debug / Diagnostic":7,"Platform / Boot":6,"UPI / Interconnect / Uncore":39,"IIO / PCIe Configuration":31,"Memory Configuration":82,"Other":21,"Peripheral / IO":4,"Security":24,"CPU Configuration":9,"CXL Configuration":3,"Power Management":4,"Graphics / Display":1},"source":"https://github.com/intel/FSP/tree/master/EagleStreamFspBinPkg","vendor":"Intel"},{"pkg_name":"ElkhartLakeFspBinPkg","platform":"ElkhartLake","processor":"Intel Atom x6000E, Pentium/Celeron N/J (Elkhart Lake)","segment":"Embedded","fsp_spec_version":"2.1","total_parameters":1303,"categories":{"IIO / PCIe Configuration":191,"Memory Configuration":172,"Debug / Diagnostic":48,"Other":425,"Peripheral / IO":220,"Graphics / Display":58,"CPU Configuration":19,"Power Management":102,"Security":16,"Platform / Boot":2,"UPI / Interconnect / Uncore":50},"source":"https://github.com/intel/FSP/tree/master/ElkhartLakeFspBinPkg","vendor":"Intel"},{"pkg_name":"IceLakeFspBinPkg","platform":"IceLake","processor":"10th Gen Intel Core (Ice Lake)","segment":"Client","fsp_spec_version":"2.1","total_parameters":1077,"categories":{"Memory Configuration":146,"IIO / PCIe Configuration":137,"Debug / Diagnostic":40,"Other":368,"Security":19,"Power Management":98,"CPU Configuration":23,"Graphics / Display":46,"Peripheral / IO":176,"UPI / Interconnect / Uncore":24},"source":"https://github.com/intel/FSP/tree/master/IceLakeFspBinPkg","vendor":"Intel"},{"pkg_name":"IdavilleFspBinPkg","platform":"Idaville","processor":"Intel Xeon D-1700/D-2700 (Ice Lake-D)","segment":"Server","fsp_spec_version":"2.1","total_parameters":572,"categories":{"Memory Configuration":58,"Graphics / Display":40,"Other":98,"Peripheral / IO":48,"Security":24,"IIO / PCIe Configuration":246,"Power Management":38,"Platform / Boot":2,"Debug / Diagnostic":8,"CPU Configuration":8,"UPI / Interconnect / Uncore":2},"source":"https://github.com/intel/FSP/tree/master/IdavilleFspBinPkg","vendor":"Intel"},{"pkg_name":"KabylakeFspBinPkg","platform":"Kabylake","processor":"7th Gen Intel Core (Kaby Lake)","segment":"Client","fsp_spec_version":"2.0","total_parameters":748,"categories":{"IIO / PCIe Configuration":98,"Memory Configuration":59,"Other":262,"Debug / Diagnostic":24,"Peripheral / IO":142,"Graphics / Display":37,"Power Management":85,"Security":15,"CPU Configuration":16,"UPI / Interconnect / Uncore":9,"Platform / Boot":1},"source":"https://github.com/intel/FSP/tree/master/KabylakeFspBinPkg","vendor":"Intel"},{"pkg_name":"MeteorLakeFspBinPkg","platform":"MeteorLake","processor":"Intel Core Ultra (Meteor Lake)","segment":"Client","fsp_spec_version":"2.4","total_parameters":1644,"categories":{"IIO / PCIe Configuration":263,"Memory Configuration":270,"Debug / Diagnostic":94,"Other":534,"Peripheral / IO":195,"CPU Configuration":43,"Graphics / Display":83,"Security":27,"Power Management":99,"UPI / Interconnect / Uncore":32,"Platform / Boot":4},"source":"https://github.com/intel/FSP/tree/master/MeteorLakeFspBinPkg","vendor":"Intel"},{"pkg_name":"RaptorLakeFspBinPkg","platform":"RaptorLake","processor":"12th/13th/14th Gen Intel Core (Alder Lake, Raptor Lake)","segment":"Client","fsp_spec_version":"2.3","total_parameters":7187,"categories":{"IIO / PCIe Configuration":1020,"Memory Configuration":1173,"Debug / Diagnostic":393,"Other":2416,"Peripheral / IO":913,"Power Management":550,"CPU Configuration":145,"Graphics / Display":314,"Security":115,"UPI / Interconnect / Uncore":138,"Platform / Boot":10},"source":"https://github.com/intel/FSP/tree/master/RaptorLakeFspBinPkg","vendor":"Intel"},{"pkg_name":"TigerLakeFspBinPkg","platform":"TigerLake","processor":"11th Gen Intel Core (Tiger Lake)","segment":"Client","fsp_spec_version":"2.2","total_parameters":2910,"categories":{"IIO / PCIe Configuration":469,"Memory Configuration":424,"Debug / Diagnostic":128,"Other":951,"Peripheral / IO":391,"Power Management":205,"CPU Configuration":65,"Graphics / Display":148,"Security":69,"Platform / Boot":6,"UPI / Interconnect / Uncore":54},"source":"https://github.com/intel/FSP/tree/master/TigerLakeFspBinPkg","vendor":"Intel"},{"pkg_name":"WhitleyFspBinPkg","platform":"Whitley","processor":"3rd Gen Intel Xeon Scalable (Ice Lake-SP)","segment":"Server","fsp_spec_version":"2.1","total_parameters":118,"categories":{"Debug / Diagnostic":3,"Platform / Boot":5,"UPI / Interconnect / Uncore":38,"IIO / PCIe Configuration":49,"Memory Configuration":6,"Other":6,"Peripheral / IO":7,"Security":2,"CPU Configuration":2},"source":"https://github.com/intel/FSP/tree/master/WhitleyFspBinPkg","vendor":"Intel"},{"platform":"cezanne","pkg_name":"amd_fsp_cezanne","processor":"AMD Ryzen 5000 (Cezanne/Zen 3)","segment":"Client","family":"19h","source_type":"AMD FSP","source":"https://github.com/coreboot/coreboot/tree/master/src/vendorcode/amd/fsp/cezanne","total_parameters":80,"categories":{"Debug / Serial Configuration":5,"Memory Configuration":3,"PCIe / NBIO Configuration":6,"Display / Graphics":9,"CPU / CCX Configuration":2,"Power / Thermal Management":41,"Security":1,"Audio Configuration":4,"Storage Configuration":5,"USB Configuration":1,"Platform / Miscellaneous":3},"vendor":"AMD"},{"platform":"glinda","pkg_name":"amd_fsp_glinda","processor":"AMD Ryzen (Glinda/Zen 4)","segment":"Client","family":"19h","source_type":"AMD FSP","source":"https://github.com/coreboot/coreboot/tree/master/src/vendorcode/amd/fsp/glinda","total_parameters":96,"categories":{"Debug / Serial Configuration":5,"Memory Configuration":3,"PCIe / NBIO Configuration":11,"Display / Graphics":2,"CPU / CCX Configuration":2,"Power / Thermal Management":41,"Security":1,"Audio Configuration":4,"Storage Configuration":5,"USB Configuration":5,"Platform / Miscellaneous":16,"FCH Configuration":1},"vendor":"AMD"},{"platform":"mendocino","pkg_name":"amd_fsp_mendocino","processor":"AMD Ryzen/Athlon 7020 (Mendocino/Zen 2)","segment":"Client","family":"17h","source_type":"AMD FSP","source":"https://github.com/coreboot/coreboot/tree/master/src/vendorcode/amd/fsp/mendocino","total_parameters":81,"categories":{"Debug / Serial Configuration":5,"Memory Configuration":3,"PCIe / NBIO Configuration":8,"Display / Graphics":4,"CPU / CCX Configuration":2,"Power / Thermal Management":41,"Security":1,"Audio Configuration":4,"Storage Configuration":5,"USB Configuration":1,"Platform / Miscellaneous":7},"vendor":"AMD"},{"platform":"phoenix","pkg_name":"amd_fsp_phoenix","processor":"AMD Ryzen 7040 (Phoenix/Zen 4)","segment":"Client","family":"19h","source_type":"AMD FSP","source":"https://github.com/coreboot/coreboot/tree/master/src/vendorcode/amd/fsp/phoenix","total_parameters":68,"categories":{"Debug / Serial Configuration":5,"Memory Configuration":2,"PCIe / NBIO Configuration":6,"Display / Graphics":2,"CPU / CCX Configuration":2,"Power / Thermal Management":41,"Security":1,"Audio Configuration":4,"Storage Configuration":1,"USB Configuration":1,"Platform / Miscellaneous":3},"vendor":"AMD"},{"platform":"picasso","pkg_name":"amd_fsp_picasso","processor":"AMD Ryzen 3000 Mobile (Picasso/Zen+)","segment":"Client","family":"17h","source_type":"AMD FSP","source":"https://github.com/coreboot/coreboot/tree/master/src/vendorcode/amd/fsp/picasso","total_parameters":106,"categories":{"Memory Configuration":4,"Debug / Serial Configuration":6,"Power / Thermal Management":15,"Platform / Miscellaneous":37,"CPU / CCX Configuration":3,"Storage Configuration":5,"Security":1,"Audio Configuration":2,"Display / Graphics":8,"PCIe / NBIO Configuration":6,"USB Configuration":19},"vendor":"AMD"},{"platform":"renoir","pkg_name":"amd_fsp_renoir","processor":"AMD Ryzen 4000/5000 Mobile (Renoir/Lucienne/Zen 2)","segment":"Client","family":"17h","source_type":"AMD FSP","source":"https://github.com/coreboot/coreboot/tree/master/src/vendorcode/amd/fsp/renoir","total_parameters":75,"categories":{"Debug / Serial Configuration":5,"Memory Configuration":3,"PCIe / NBIO Configuration":6,"Display / Graphics":2,"CPU / CCX Configuration":2,"Power / Thermal Management":41,"Security":1,"Audio Configuration":4,"Storage Configuration":5,"USB Configuration":1,"Platform / Miscellaneous":5},"vendor":"AMD"},{"platform":"00670F00","pkg_name":"agesa_pi_00670F00","processor":"AMD Carrizo/Bristol Ridge (Family 15h Model 60h-6Fh)","segment":"Client (Legacy)","family":"15h","source_type":"AGESA PI","source":"https://github.com/coreboot/coreboot/tree/master/src/vendorcode/amd/pi/00670F00","total_parameters":620,"categories":{"Peripheral / IO":5,"Platform / Miscellaneous":294,"PCIe / NBIO Configuration":18,"Storage Configuration":7,"USB Configuration":4,"CPU / CCX Configuration":18,"Memory Configuration":167,"Display / Graphics":53,"Power / Thermal Management":29,"Audio Configuration":8,"Security":2,"FCH Configuration":13,"Debug / Serial Configuration":2},"vendor":"AMD"},{"platform":"00730F01","pkg_name":"agesa_pi_00730F01","processor":"AMD Stoney Ridge (Family 15h Model 70h-7Fh)","segment":"Client (Legacy)","family":"15h","source_type":"AGESA PI","source":"https://github.com/coreboot/coreboot/tree/master/src/vendorcode/amd/pi/00730F01","total_parameters":531,"categories":{"Peripheral / IO":2,"Platform / Miscellaneous":265,"PCIe / NBIO Configuration":18,"Storage Configuration":7,"USB Configuration":4,"CPU / CCX Configuration":12,"Memory Configuration":144,"Display / Graphics":20,"Power / Thermal Management":36,"Audio Configuration":6,"Security":2,"FCH Configuration":13,"Debug / Serial Configuration":2},"vendor":"AMD"},{"platform":"genoa_poc","pkg_name":"opensil_genoa_poc","processor":"AMD EPYC 9004 (Genoa/Zen 4) \u2014 PoC","segment":"Server","family":"19h","source_type":"openSIL","source":"https://github.com/coreboot/coreboot/tree/master/src/vendorcode/amd/opensil/genoa_poc","total_parameters":11,"categories":{"Platform / Miscellaneous":4,"PCIe / NBIO Configuration":6,"Peripheral / IO":1},"vendor":"AMD"},{"platform":"stub","pkg_name":"opensil_stub","processor":"stub","segment":"Server","family":"Unknown","source_type":"openSIL","source":"https://github.com/coreboot/coreboot/tree/master/src/vendorcode/amd/opensil/stub","total_parameters":10,"categories":{"Platform / Miscellaneous":3,"PCIe / NBIO Configuration":4,"Peripheral / IO":1,"Power / Thermal Management":2},"vendor":"AMD"},{"platform":"turin_poc","pkg_name":"opensil_turin_poc","processor":"AMD EPYC (Turin/Zen 5) \u2014 PoC","segment":"Server","family":"1Ah","source_type":"openSIL","source":"https://github.com/coreboot/coreboot/tree/master/src/vendorcode/amd/opensil/turin_poc","total_parameters":11,"categories":{"Platform / Miscellaneous":4,"PCIe / NBIO Configuration":6,"Peripheral / IO":1},"vendor":"AMD"}];
 
-let currentPlatform = null;
-let platformData    = null;
-let activeCategory  = 'all';
-let searchQuery     = '';
-let expandedCards   = new Set();
+let currentPlatform  = null;
+let platformData     = null;
+let activeCategory   = 'all';
+let searchQuery      = '';
+let expandedCards    = new Set();
+let selectedVendor   = null;   // 'Intel' | 'AMD' | null
 
 // ── Vendor theming ───────────────────────────────────────────────────────────
 
@@ -188,9 +199,47 @@ function setVendorTheme(vendor) {
   document.body.classList.remove('vendor-intel','vendor-amd');
   const bar = document.getElementById('vendorBar');
   bar.classList.remove('intel','amd','none');
-  if (vendor === 'Intel')      { document.body.classList.add('vendor-intel'); bar.classList.add('intel'); }
-  else if (vendor === 'AMD')   { document.body.classList.add('vendor-amd');   bar.classList.add('amd'); }
-  else                         { bar.classList.add('none'); }
+  if (vendor === 'Intel')    { document.body.classList.add('vendor-intel'); bar.classList.add('intel'); }
+  else if (vendor === 'AMD') { document.body.classList.add('vendor-amd');   bar.classList.add('amd'); }
+  else                       { bar.classList.add('none'); }
+}
+
+// ── Vendor toggle ─────────────────────────────────────────────────────────────
+
+function selectVendor(v) {
+  selectedVendor = (selectedVendor === v) ? null : v;
+  setVendorTheme(selectedVendor);
+  const bi = document.getElementById('btnIntel');
+  const ba = document.getElementById('btnAMD');
+  bi.className = 'vtoggle' + (selectedVendor === 'Intel' ? ' active-intel' : '');
+  ba.className = 'vtoggle' + (selectedVendor === 'AMD'   ? ' active-amd'   : '');
+  // If current platform doesn't belong to new vendor filter, reset
+  if (currentPlatform && selectedVendor && currentPlatform.vendor !== selectedVendor) {
+    currentPlatform = null; platformData = null;
+    document.getElementById('sidebarNav').innerHTML = '';
+    document.getElementById('content').innerHTML = '';
+  }
+  rebuildPlatformSelect();
+  updateBadge();
+}
+
+// ── Badge ─────────────────────────────────────────────────────────────────────
+
+function updateBadge() {
+  const badge = document.getElementById('totalBadge');
+  if (currentPlatform) {
+    const v     = currentPlatform.vendor;
+    const extra = v === 'Intel' ? `FSP ${currentPlatform.fsp_spec_version||''}` : (currentPlatform.source_type||'');
+    const seg   = currentPlatform.segment || '';
+    badge.innerHTML = `<span class="seg seg-${seg.replace(/[^a-zA-Z]/g,'')}" style="font-size:11px;padding:1px 6px">${seg}</span> ${extra} · ${currentPlatform.total_parameters.toLocaleString()} parameters`;
+  } else if (selectedVendor) {
+    const ps    = INDEX.filter(p => p.vendor === selectedVendor);
+    const total = ps.reduce((s,p) => s + p.total_parameters, 0);
+    badge.textContent = `${ps.length} platforms · ${total.toLocaleString()} parameters`;
+  } else {
+    const total = INDEX.reduce((s,p) => s + p.total_parameters, 0);
+    badge.textContent = `${INDEX.length} platforms · ${total.toLocaleString()} parameters`;
+  }
 }
 
 // ── Hash routing (same pattern as Claude Code's fix) ─────────────────────────
@@ -217,7 +266,7 @@ window.addEventListener('popstate', () => routeFromHash(false));
 // ── Init ─────────────────────────────────────────────────────────────────────
 
 function init() {
-  buildPlatformSelect();
+  rebuildPlatformSelect();
   setupEvents();
   routeFromHash(false);
 }
@@ -226,12 +275,12 @@ function init() {
 
 function showLanding() {
   setHash('', false);
-  setVendorTheme(null);
+  setVendorTheme(selectedVendor);
   currentPlatform = null; platformData = null;
   document.getElementById('platformSelect').value = '';
-  document.getElementById('platformMeta').innerHTML = '';
   document.getElementById('sidebarNav').innerHTML = '';
   document.getElementById('stats').innerHTML = '';
+  updateBadge();
 
   const intel = INDEX.filter(p => p.vendor === 'Intel');
   const amd   = INDEX.filter(p => p.vendor === 'AMD');
@@ -297,10 +346,7 @@ async function loadPlatform(pkgName, scrollToField, push) {
   setHash(hash, push);
 
   document.getElementById('platformSelect').value = pkgName;
-  const v = currentPlatform.vendor;
-  const extra = v === 'Intel' ? `FSP ${currentPlatform.fsp_spec_version||''}` : (currentPlatform.source_type||'');
-  document.getElementById('platformMeta').innerHTML =
-    `<span class="seg seg-${(currentPlatform.segment||'').replace(/[^a-zA-Z]/g,'')}">${currentPlatform.segment||''}</span> ${extra} · ${currentPlatform.total_parameters} params`;
+  updateBadge();
 
   document.getElementById('content').innerHTML =
     '<div class="loading"><div class="spinner"></div><div>Loading parameters…</div></div>';
@@ -339,36 +385,45 @@ async function loadPlatform(pkgName, scrollToField, push) {
 
 // ── Sidebar ──────────────────────────────────────────────────────────────────
 
-function buildPlatformSelect() {
+function rebuildPlatformSelect() {
   const sel = document.getElementById('platformSelect');
-  const intel = INDEX.filter(p => p.vendor === 'Intel');
-  const amd   = INDEX.filter(p => p.vendor === 'AMD');
+  sel.innerHTML = '<option value="">Select platform...</option>';
 
-  // Intel groups
-  const iGroups = { Server:[], Client:[], Embedded:[] };
-  for (const p of intel) (iGroups[p.segment]||iGroups.Client).push(p);
-  for (const [seg, platforms] of Object.entries(iGroups)) {
-    if (!platforms.length) continue;
-    const og = document.createElement('optgroup');
-    og.label = `Intel — ${seg}`;
-    for (const p of platforms.sort((a,b) => a.processor.localeCompare(b.processor))) {
-      const opt = document.createElement('option'); opt.value = p.pkg_name;
-      opt.textContent = `${p.processor} (${p.total_parameters})`; og.appendChild(opt);
+  const show = selectedVendor ? INDEX.filter(p => p.vendor === selectedVendor) : INDEX;
+  const intel = show.filter(p => p.vendor === 'Intel');
+  const amd   = show.filter(p => p.vendor === 'AMD');
+
+  if (intel.length) {
+    const iGroups = { Server:[], Client:[], Embedded:[] };
+    for (const p of intel) (iGroups[p.segment]||iGroups.Client).push(p);
+    for (const [seg, platforms] of Object.entries(iGroups)) {
+      if (!platforms.length) continue;
+      const og = document.createElement('optgroup');
+      og.label = selectedVendor ? seg : `Intel — ${seg}`;
+      for (const p of platforms.sort((a,b) => a.processor.localeCompare(b.processor))) {
+        const opt = document.createElement('option');
+        opt.value = p.pkg_name;
+        opt.textContent = `${p.processor} (${p.total_parameters})`;
+        og.appendChild(opt);
+      }
+      sel.appendChild(og);
     }
-    sel.appendChild(og);
   }
 
-  // AMD groups
-  const aGroups = {};
-  for (const p of amd) { const k = p.source_type||'AMD'; if (!aGroups[k]) aGroups[k] = []; aGroups[k].push(p); }
-  for (const [src, platforms] of Object.entries(aGroups)) {
-    const og = document.createElement('optgroup');
-    og.label = `AMD — ${src}`;
-    for (const p of platforms.sort((a,b) => a.processor.localeCompare(b.processor))) {
-      const opt = document.createElement('option'); opt.value = p.pkg_name;
-      opt.textContent = `${p.processor} (${p.total_parameters})`; og.appendChild(opt);
+  if (amd.length) {
+    const aGroups = {};
+    for (const p of amd) { const k = p.source_type||'AMD'; if (!aGroups[k]) aGroups[k] = []; aGroups[k].push(p); }
+    for (const [src, platforms] of Object.entries(aGroups)) {
+      const og = document.createElement('optgroup');
+      og.label = selectedVendor ? src : `AMD — ${src}`;
+      for (const p of platforms.sort((a,b) => a.processor.localeCompare(b.processor))) {
+        const opt = document.createElement('option');
+        opt.value = p.pkg_name;
+        opt.textContent = `${p.processor} (${p.total_parameters})`;
+        og.appendChild(opt);
+      }
+      sel.appendChild(og);
     }
-    sel.appendChild(og);
   }
 }
 
