@@ -214,8 +214,9 @@ function setVendorTheme(vendor) {
 function selectVendor(v) {
   selectedVendor = (selectedVendor === v) ? null : v;
   setVendorTheme(selectedVendor);
-  document.getElementById('btnIntel').className = 'vtoggle' + (selectedVendor === 'Intel' ? ' active-intel' : '');
-  document.getElementById('btnAMD').className   = 'vtoggle' + (selectedVendor === 'AMD'   ? ' active-amd'   : '');
+  document.getElementById('btnIntel').className  = 'vtoggle' + (selectedVendor === 'Intel' ? ' active-intel' : '');
+  document.getElementById('btnAMD').className    = 'vtoggle' + (selectedVendor === 'AMD'   ? ' active-amd'   : '');
+  document.querySelector('.vendor-label').style.display = selectedVendor ? 'none' : '';
   // Reset platform if it doesn't belong to the new vendor
   if (currentPlatform && selectedVendor && currentPlatform.vendor !== selectedVendor) {
     currentPlatform = null; platformData = null;
