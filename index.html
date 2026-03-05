@@ -341,7 +341,12 @@ async function loadPlatform(pkgName, scrollToField, push) {
   currentPlatform = INDEX.find(p => p.pkg_name === pkgName);
   if (!currentPlatform) return;
 
-  setVendorTheme(currentPlatform.vendor);
+  // Sync vendor state and buttons with the selected platform's vendor
+  selectedVendor = currentPlatform.vendor;
+  setVendorTheme(selectedVendor);
+  document.getElementById('btnIntel').className = 'vtoggle' + (selectedVendor === 'Intel' ? ' active-intel' : '');
+  document.getElementById('btnAMD').className   = 'vtoggle' + (selectedVendor === 'AMD'   ? ' active-amd'   : '');
+  document.querySelector('.vendor-label').style.display = 'none';
 
   const hash = pkgName + (scrollToField ? '/' + scrollToField : '');
   setHash(hash, push);
